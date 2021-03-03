@@ -1,0 +1,30 @@
+&spi2 {
+        status = "okay";
+        pinctrl-0 = <&spi2_sck_pd1 &spi2_miso_pd3 &spi2_mosi_pd4>;
+
+        /* Reg 0*/
+        cs-gpios = <&gpiod 5 GPIO_ACTIVE_LOW>;
+
+        /* rx only needed for the stm32 spi dma driver but not used */
+        dmas = <&dma1 5 1 0x20440 0x0>, <&dma1 4 1 0x20480 0x0>;
+        dma-names = "tx", "rx";
+
+
+        motor@0 {
+                compatible = "thm,motor";
+
+                chain-length = <1>;
+
+                spi-max-frequency = <1600000>;
+
+                /* register for the cs */
+                reg = <0>;
+
+                label = "MOTOR";
+        };
+};
+
+&dma1 {
+        status ="okay";
+};
+
