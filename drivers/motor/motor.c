@@ -1,5 +1,6 @@
 /* motor.c - Driver for MOTOR vibration */
 
+#include <cstdint>
 #include <kernel.h>
 #include <init.h>
 #include <drivers/gpio.h>
