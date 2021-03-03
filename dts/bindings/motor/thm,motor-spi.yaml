@@ -1,0 +1,22 @@
+# Copyright (c) 2019, Linaro Limited
+# SPDX-License-Identifier: Apache-2.0
+
+description: MOTOR motor for vibration
+
+compatible: "thm,motor"
+
+include: spi-device.yaml
+
+properties:
+        chain-length:
+                type: int
+                required: true
+                description: |
+                        The number of motors in the daisy-chain
+
+dma-cells:
+- channel
+- slot
+- channel-config
+- features
+
