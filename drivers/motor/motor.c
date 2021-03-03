@@ -1,5 +1,6 @@
 /* motor.c - Driver for MOTOR vibration */
 
+#include <cstdint>
 #include <kernel.h>
 #include <init.h>
 #include <drivers/gpio.h>
@@ -164,6 +165,7 @@ static int motor_init(const struct device *dev)
         return 0;
 }
 
+/* Initializes a struct motor_config for an instance on a SPI bus. */
 #define MOTOR_CONFIG_SPI(inst)                                          \
         {                                                               \
                 .bus = DEVICE_DT_GET(DT_INST_BUS(inst)),                \
@@ -171,6 +173,10 @@ static int motor_init(const struct device *dev)
                                               MOTOR_SPI_OPERATION,      \
                                               0),                       \
         }
+
+/*
+ *  Main instantiation macro.
+ */
 
 #define MOTOR_DEFINE(inst)                                              \
         static struct motor_data motor_data_##inst;                     \

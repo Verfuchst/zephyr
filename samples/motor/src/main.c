@@ -20,7 +20,7 @@ static const struct device *get_motor_device(void)
                 return NULL;
         }
 
-        printk("Found device \"%s\", getting sensor data\n", dev->name);
+        printk("Found device \"%s\", ready to write \n", dev->name);
         return dev;
 }
 
