@@ -1,0 +1,48 @@
+# BMP280 temperature and pressure sensor configuration options
+
+# Copyright (c) 2016 Intel Corporation
+# Copyright (c) 2017 IpTronix S.r.l.
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig BNO055
+	bool "BNO055 sensor"
+	depends on I2C
+	help
+	  Enable driver for BNO055 I2C-based accelerometer, gyroscope, magnetometer and orientation.
+
+if BNO055
+
+choice 
+       prompt "BNO055 operation Mode"
+       default BNO055_OPERATION_MODE_NDOF 
+       help 
+         Operation mode 
+config BNO055_OPERATION_MODE_CONFIG
+        bool "0X00"
+config BNO055_OPERATION_MODE_ACCONLY
+        bool "0X01"
+config BNO055_OPERATION_MODE_MAGONLY
+        bool "0X02"
+config BNO055_OPERATION_MODE_GYRONLY
+        bool "0X03"
+config BNO055_OPERATION_MODE_ACCMAG
+        bool "0X04"
+config BNO055_OPERATION_MODE_ACCGYRO
+        bool "0X05"
+config BNO055_OPERATION_MODE_MAGGYRO
+        bool "0X06"
+config BNO055_OPERATION_MODE_AMG
+        bool "0X07"
+config BNO055_OPERATION_MODE_IMUPLUS
+        bool "0X08"
+config BNO055_OPERATION_MODE_COMPASS
+        bool "0X09"
+config BNO055_OPERATION_MODE_M4G
+        bool "0X0A"
+config BNO055_OPERATION_MODE_NDOF_FMC_OFF
+        bool "0X0B"
+config BNO055_OPERATION_MODE_NDOF
+        bool "0X0C"
+endchoice
+
+endif # BNO055
