@@ -13,10 +13,3 @@ properties:
                 required: true
                 description: |
                         The number of motors in the daisy-chain
-
-dma-cells:
-- channel
-- slot
-- channel-config
-- features
-
