@@ -16,6 +16,7 @@ Samples and Demos
    bluetooth/bluetooth.rst
    sensor/*
    arch/*
+   motor/*
    boards/*
    drivers/drivers.rst
    application_development/*
