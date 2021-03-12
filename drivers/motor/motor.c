@@ -1,6 +1,5 @@
 /* motor.c - Driver for MOTOR vibration */
 
-#include <cstdint>
 #include <kernel.h>
 #include <init.h>
 #include <drivers/gpio.h>
@@ -62,6 +61,7 @@ static int motor_write_spi(const struct device *bus,
                 const uint16_t motor,
                 const uint8_t val)
 {   
+        /* one cmd contains the FRAMES with the given sensitivity for each motor */
         uint16_t cmd[FRAMES] = { 0 }; 
         
         /* Init the array with 1 depends on the val for the sensitivity */
