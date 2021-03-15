@@ -111,6 +111,4 @@ source "drivers/edac/Kconfig"
 
 source "drivers/pm_cpu_ops/Kconfig"
 
-source "drivers/motor/Kconfig"
-
 endmenu
