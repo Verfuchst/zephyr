@@ -4,16 +4,19 @@
 #include <device.h>
 #include <drivers/spi.h>
 
+#define MOTOR_BOARD
 
 #if defined CONFIG_MOTOR_STM32_INPUT_CAPTURE_MODE
 #define MOTOR_ARCH_SPECIFIC
 #define MOTOR_STM32
+#undef MOTOR_BOARD
+#define MOTOR_BOARD STM32
 #endif /* CONFIG_MOTOR_STM32_INPUT_CAPTURE_MODE */
 
 struct motor_config {
         const struct device *bus;
         const struct spi_config spi_cfg;
-#ifdef MOTOR_ARCH_SPECIFIC 
+#ifdef MOTOR_STM32
         TIM_TypeDef *timer;
 #endif
 };
