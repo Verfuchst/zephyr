@@ -1,6 +1,3 @@
-# Copyright (c) 2019, Linaro Limited
-# SPDX-License-Identifier: Apache-2.0
-
 description: MOTOR motor for vibration
 
 compatible: "thm,motor"
@@ -8,6 +5,20 @@ compatible: "thm,motor"
 include: spi-device.yaml
 
 properties:
+        
+        
+        tim:
+                type: phandle
+                required: false
+
+        save-tim:
+                type: phandle
+                required: false
+
+        counting-tim:
+                type: phandle
+                required: false
+
         chain-length:
                 type: int
                 required: true

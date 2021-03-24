@@ -1,5 +1,6 @@
 /* motor.c - Driver for MOTOR vibration */
 
+#include "stm32l475xx.h"
 #include <kernel.h>
 #include <init.h>
 #include <drivers/gpio.h>
@@ -8,6 +9,7 @@
 #include <device.h>
 #include <zephyr/types.h>
 #include <devicetree.h>
+#include "motor_h.h"
 
 #include <logging/log.h>
 
@@ -19,7 +21,7 @@ LOG_MODULE_REGISTER(MOTOR, CONFIG_MOTOR_LOG_LEVEL);
 #warning "MOTOR driver enabled without any devices"
 #endif
 
-
+/* SPI BUS CONFIGS */
 #define MOTOR_SPI_OPERATION (SPI_WORD_SET(8) | SPI_TRANSFER_MSB)
 
 /* Number of sendet frames to get a 1-100 precentage for sensitivity*/
@@ -27,15 +29,6 @@ LOG_MODULE_REGISTER(MOTOR, CONFIG_MOTOR_LOG_LEVEL);
 
 /* To many devices */
 #define EMANYDEVS 5
-
-struct motor_data {
-        struct k_timer timer;
-};
-
-struct motor_config {
-        const struct device *bus;
-        const struct spi_config spi_cfg;
-};
 
 static inline struct motor_data *to_data(const struct device *dev)
 {
@@ -105,7 +98,7 @@ void motor_worker_handler(struct k_work* work)
 {
         uint16_t motor = MOTOR_1 | MOTOR_2;
         for(uint8_t i = 0; i < number_of_devices; i++) {
-                motor_write_spi(devices[i], motor, 20);
+                motor_write_spi(devices[i], motor, 50);
         }
 }	
 
@@ -139,6 +132,7 @@ static int motor_bus_check_spi(const struct device *bus, const struct spi_config
 static int motor_init(const struct device *dev)
 {	    
         struct motor_data *data = to_data(dev);                 
+        struct motor_config *cfg = to_config(dev);
         int err = 0;
 
         LOG_DBG("initializing \"%s\" on bus \"%s\"",
@@ -155,6 +149,10 @@ static int motor_init(const struct device *dev)
                 LOG_DBG("bus check failed: %d", err);
                 return err;
         }
+        
+#ifdef MOTOR_ARCH_SPECIFIC
+        
+#endif
 
         devices[number_of_devices++] = dev;
 
@@ -174,6 +172,16 @@ static int motor_init(const struct device *dev)
                                               0),                       \
         }
 
+#define MOTOR_CONFIG_SPI_TIMER_STM32(inst)                              \
+        {                                                               \
+                .bus = DEVICE_DT_GET(DT_INST_BUS(inst)),                \
+                .spi_cfg = SPI_CONFIG_DT_INST(inst,                     \
+                                MOTOR_SPI_OPERATION,                    \
+                                0),                                     \
+                .timer = (TIM_TypeDef *)DT_REG_ADDR(                    \
+                                DT_INST_PROP(inst, tim)),               \
+        }                                                                     
+
 /*
  *  Main instantiation macro.
  */
@@ -181,7 +189,7 @@ static int motor_init(const struct device *dev)
 #define MOTOR_DEFINE(inst)                                              \
         static struct motor_data motor_data_##inst;                     \
         static const struct motor_config motor_config_##inst =          \
-                            MOTOR_CONFIG_SPI(inst);                     \
+                            MOTOR_CONFIG_SPI_TIMER_STM32(inst);     \
         DEVICE_DT_INST_DEFINE(inst,                                     \
                         motor_init,                                     \
                         device_pm_control_nop,                          \

@@ -1,3 +1,7 @@
+&timers3 {
+        status = "okay";
+};
+
 &spi2 {
         status = "okay";
         pinctrl-0 = <&spi2_sck_pd1 &spi2_miso_pd3 &spi2_mosi_pd4>;
@@ -11,9 +15,18 @@
 
 
         motor@0 {
+        
+                status = "okay";
+                
                 compatible = "thm,motor";
 
                 chain-length = <1>;
+                
+                save-tim = <&tim3_ch1_pb4>;
+
+                counting-tim = <&tim3_ch4_pb1>;
+                
+                tim = <&timers3>;
 
                 spi-max-frequency = <1600000>;
 
@@ -21,10 +34,11 @@
                 reg = <0>;
 
                 label = "MOTOR";
+
         };
 };
 
 &dma1 {
-        status ="okay";
+        status = "okay";
 };
 

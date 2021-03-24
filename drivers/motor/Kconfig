@@ -16,5 +16,18 @@ config MOTOR_INIT_PRIORITY
     help
         Motor initialization priority for the driver
 
+choice 
+        prompt "MOTOR timer input capture mode"
+        default MOTOR_NO_INPUT_CAPTURE_MODE
+        help
+                Select the input capture mode for the motor transfer. 
+config MOTOR_NO_INPUT_CAPTURE_MODE
+        bool "no arch specific implementation"
+config MOTOR_STM32_INPUT_CAPTURE_MODE
+        bool "STM32 input capture mode"
+        depends on SOC_FAMILY_STM32
+        select USE_STM32_LL_TIM
+endchoice 
+
         
 endif # MOTOR
