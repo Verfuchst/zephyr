@@ -1,6 +1,5 @@
 /* motor.c - Driver for MOTOR vibration */
 
-#include "stm32l475xx.h"
 #include <kernel.h>
 #include <init.h>
 #include <drivers/gpio.h>
