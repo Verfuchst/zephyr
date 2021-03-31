@@ -20,18 +20,16 @@
                 
                 compatible = "thm,motor";
 
-                chain-length = <1>;
+                chainlength = <1>;
                 
-                save-tim = <&tim3_ch1_pb4>;
-
-                counting-tim = <&tim3_ch4_pb1>;
-                
-                tim = <&timers3>;
-
                 spi-max-frequency = <1600000>;
 
                 /* register for the cs */
                 reg = <0>;
+
+                tim = <&timers3>;
+        
+                pinctrl-0 = <&tim3_ch1_pb4 &tim3_ch4_pb1>;
 
                 label = "MOTOR";
 

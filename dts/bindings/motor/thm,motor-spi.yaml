@@ -10,16 +10,14 @@ properties:
         tim:
                 type: phandle
                 required: false
-
-        save-tim:
-                type: phandle
+        
+        pinctrl-0:
+                type: phandles
                 required: false
+                description: |
+                        Two channels for save and clk
 
-        counting-tim:
-                type: phandle
-                required: false
-
-        chain-length:
+        chainlength:
                 type: int
                 required: true
                 description: |
