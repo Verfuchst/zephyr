@@ -81,6 +81,14 @@ enum sensor_channel {
 	SENSOR_CHAN_AMBIENT_TEMP,
 	/** Pressure in kilopascal. */
 	SENSOR_CHAN_PRESS,
+        /** Euler heading in degrees */
+        SENSOR_CHAN_H,
+        /** Euler rolling in degrees */
+        SENSOR_CHAN_R,
+        /** Euler pitch in degrees */
+        SENSOR_CHAN_P,
+        /** Euler heading, rolling, pitch in degrees */
+        SENSOR_CHAN_HRP,
 	/**
 	 * Proximity.  Adimensional.  A value of 1 indicates that an
 	 * object is close.

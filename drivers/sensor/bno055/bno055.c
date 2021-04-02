@@ -169,7 +169,7 @@ static int bno055_sample_fetch(const struct device *dev,
 {
         int ret = 0;
         switch(chan) {
-                case SENSOR_CHAN_ROTATION:
+                case SENSOR_CHAN_HRP:
                         ret = bno055_read_euler_hrp(dev);
                 default: 
                         return -EINVAL;
@@ -184,15 +184,20 @@ static int bno055_channel_get(const struct device *dev,
 	struct bno055_data *data = to_data(dev);
         
 	switch (chan) {
-	case SENSOR_CHAN_ROTATION:
+	case SENSOR_CHAN_H:
                 data->euler_float_hpr.h = (float)(data->euler_reg_hpr.h / BNO055_EULER_DIV_DEG);
-                data->euler_float_hpr.p = (float)(data->euler_reg_hpr.p / BNO055_EULER_DIV_DEG);
+                val->val1 = data->euler_reg_hpr.h;
+                val->val2 = 0; /* TODO */
+		break;
+	case SENSOR_CHAN_R:
                 data->euler_float_hpr.r = (float)(data->euler_reg_hpr.r / BNO055_EULER_DIV_DEG);
-
-                printk("heading: %f; rolling: %f; pitch: %f\n", 
-                                data->euler_float_hpr.h, 
-                                data->euler_float_hpr.r, 
-                                data->euler_float_hpr.p);
+                val->val1 = data->euler_reg_hpr.r;
+                val->val2 = 0; /* TODO */
+		break;
+	case SENSOR_CHAN_P:
+                data->euler_float_hpr.p = (float)(data->euler_reg_hpr.p / BNO055_EULER_DIV_DEG);
+                val->val1 = data->euler_reg_hpr.p;
+                val->val2 = 0; /* TODO */
 		break;
 	default:
 		return -EINVAL;
@@ -245,7 +250,7 @@ static int bno055_chip_init(const struct device *dev)
         /* Reads the current mode from register*/
         err += bno055_reg_read(dev, BNO055_OPR_MODE_ADDR, &data->cur_mode, BNO055_GEN_READ_WRITE_LENGTH);
 
-        if (err < 0) {
+        if (err != 0) {
                 LOG_DBG("ID read failed: %d", err);
                 return err;
         }

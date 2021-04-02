@@ -36,8 +36,12 @@ void main(void)
 	}
         
 	while (1) {
-                sensor_sample_fetch_chan(dev, SENSOR_CHAN_ROTATION);
-                sensor_channel_get(dev, SENSOR_CHAN_ROTATION, NULL);
+                struct sensor_value euler_h, euler_r, euler_p;
+
+                sensor_sample_fetch_chan(dev, SENSOR_CHAN_HRP);
+                sensor_channel_get(dev, SENSOR_CHAN_H, &euler_h);
+                sensor_channel_get(dev, SENSOR_CHAN_R, &euler_r);
+                sensor_channel_get(dev, SENSOR_CHAN_P, &euler_p);
 		k_sleep(K_MSEC(10));
 	}
 }
