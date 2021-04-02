@@ -20,7 +20,7 @@
                 
                 compatible = "thm,motor";
 
-                chainlength = <1>;
+                chain-length = <8>;
                 
                 spi-max-frequency = <1600000>;
 
@@ -29,7 +29,7 @@
 
                 tim = <&timers3>;
         
-                pinctrl-0 = <&tim3_ch1_pb4 &tim3_ch4_pb1>;
+                pinctrl-0 = < &tim3_ch1_pb4 &tim3_ch4_pb1 >;
 
                 label = "MOTOR";
 

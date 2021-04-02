@@ -15,10 +15,12 @@ properties:
                 type: phandles
                 required: false
                 description: |
-                        Two channels for save and clk
-
-        chainlength:
+                        channel 1 or 2 for clk, channel 3 to 6 for save 
+                        e.g. pinctrl-0 = < &tim_ch1_pb4 &tim3_ch4_pb1 >;
+                        first label would be clk and second for save
+                        
+        chain-length:
                 type: int
                 required: true
                 description: |
-                        The number of motors in the daisy-chain
+                       The number of motors in the daisy-chain

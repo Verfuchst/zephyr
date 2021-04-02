@@ -1,6 +1,5 @@
 /* motor.c - Driver for MOTOR vibration */
 
-#include "st_stm32_dt.h"
 #include <kernel.h>
 #include <init.h>
 #include <drivers/gpio.h>
@@ -65,7 +64,7 @@ static int motor_write_spi(const struct device *bus,
 {   
         /* one cmd contains the FRAMES with the given sensitivity for each motor */
         uint16_t cmd[FRAMES] = { 0 }; 
-        
+
         /* Init the array with 1 depends on the val for the sensitivity */
         for(int i = 0; i < val; i++) {
                 cmd[i] = motor;
@@ -105,7 +104,7 @@ static int8_t number_of_devices;
 
 void motor_worker_handler(struct k_work* work) 
 {
-        uint16_t motor = MOTOR_1 | MOTOR_2;
+        uint16_t motor = 0xFF;
         for(uint8_t i = 0; i < number_of_devices; i++) {
                 motor_write_spi(devices[i], motor, 50);
         }
@@ -141,7 +140,6 @@ static int motor_bus_check_spi(const struct device *bus, const struct spi_config
 static int motor_init(const struct device *dev)
 {	    
         struct motor_data *data = to_data(dev);                 
-        const struct motor_config *cfg = to_config(dev);
         int err = 0;
 
         LOG_DBG("initializing \"%s\" on bus \"%s\"",
@@ -177,56 +175,72 @@ static int motor_init(const struct device *dev)
 }
 
 
-#define DT_INST_CLK(inst)                                               \
-{                                                                       \
-        .bus = DT_CLOCKS_CELL(DT_INST_PHANDLE(inst, tim), bus),         \
-        .enr = DT_CLOCKS_CELL(DT_INST_PHANDLE(inst, tim), bits),        \
+#define DT_INST_CLK(inst)                                                               \
+{                                                                                       \
+        .bus = DT_CLOCKS_CELL(DT_INST_PHANDLE(inst, tim), bus),                         \
+        .enr = DT_CLOCKS_CELL(DT_INST_PHANDLE(inst, tim), bits),                        \
 }
 
 /* Initializes a struct motor_config for an instance on a SPI bus. */
-#define MOTOR_CONFIG_SPI(inst)                                          \
-        {                                                               \
-                .bus = DEVICE_DT_GET(DT_INST_BUS(inst)),                \
-                .spi_cfg = SPI_CONFIG_DT_INST(inst,                     \
-                                              MOTOR_SPI_OPERATION,      \
-                                              0),                       \
+#define MOTOR_CONFIG_SPI(inst)                                                          \
+        {                                                                               \
+                .bus = DEVICE_DT_GET(DT_INST_BUS(inst)),                                \
+                .spi_cfg = SPI_CONFIG_DT_INST(inst,                                     \
+                                              MOTOR_SPI_OPERATION,                      \
+                                              0),                                       \
         }
 
 
-#define MOTOR_CONFIG_SPI_TIMER_STM32(inst)                              \
-        {                                                               \
-                .bus = DEVICE_DT_GET(DT_INST_BUS(inst)),                \
-                .spi_cfg = SPI_CONFIG_DT_INST(inst,                     \
-                                MOTOR_SPI_OPERATION,                    \
-                                0),                                     \
-                .timer = {                                              \
-                                .timer = (TIM_TypeDef *)DT_REG_ADDR(    \
-                                        DT_INST_PHANDLE(inst, tim)),    \
-                                .pclken = DT_INST_CLK(inst),            \
-                                .pinctrl = pwm_pins_##inst,             \
-                                .pinctrl_len = ARRAY_SIZE(pwm_pins_##inst)\
-                },                                                      \
-                .ic_mode = &motor_input_capture_mode_stm32,             \
-                .chain_length = DT_INST_PROP(inst, chainlength),        \
-        }                                                               \
+#define MOTOR_CONFIG_SPI_TIMER_STM32(inst)                                              \
+        {                                                                               \
+                .bus = DEVICE_DT_GET(DT_INST_BUS(inst)),                                \
+                .spi_cfg = SPI_CONFIG_DT_INST(inst,                                     \
+                                MOTOR_SPI_OPERATION,                                    \
+                                0),                                                     \
+                .timer = {                                                              \
+                                .timer = (TIM_TypeDef *)DT_REG_ADDR(                    \
+                                        DT_INST_PHANDLE(inst, tim)),                    \
+                                .pclken = DT_INST_CLK(inst),                            \
+                                .pinctrl = pwm_pins_##inst,                             \
+                                .pinctrl_len = ARRAY_SIZE(pwm_pins_##inst),             \
+                },                                                                      \
+                .ic_mode = &motor_input_capture_mode_stm32,                             \
+                .chain_length = DT_INST_PROP(inst, chain_length),                       \
+        }                                                                               \
+
+/* Concat strings e.g. MOTOR_CONFIG_SPI_TIMER_##STM32 */
+#define PPCAT_NX(A, B)                                                                  \
+        A ## B  
+
+/* Expands board value e.g. board -> stm32 */
+#define PPCAT(func, board)                                                              \
+        PPCAT_NX(func, board) 
+
+
+#define MOTOR_CONFIG_SPI_TIMER_BOARD(board)                                             \
+        PPCAT(MOTOR_CONFIG_SPI_TIMER_, board)
 
 /*
  *  Main instantiation macro.
+ *  TODO: Replace ST_STM32_DT_INST_PINCTR Macro with abstract one for each board
  */
-
-#define MOTOR_DEFINE(inst)                                              \
-        static struct motor_data motor_data_##inst;                     \
-        static const struct soc_gpio_pinctrl pwm_pins_##inst[] =        \
-                ST_STM32_DT_INST_PINCTRL(inst , 0);                     \
-        static const struct motor_config motor_config_##inst =          \
-                            MOTOR_CONFIG_SPI_TIMER_STM32(inst);         \
-        DEVICE_DT_INST_DEFINE(inst,                                     \
-                        motor_init,                                     \
-                        device_pm_control_nop,                          \
-                        &motor_data_##inst,                             \
-                        &motor_config_##inst,                           \
-                        POST_KERNEL,                                    \
-                        CONFIG_MOTOR_INIT_PRIORITY,                     \
+#define MOTOR_DEFINE(inst)                                                              \
+        static struct motor_data motor_data_##inst;                                     \
+        COND_CODE_1(MOTOR_ARCH_SPECIFIC,                                                \
+                        (static const struct soc_gpio_pinctrl pwm_pins_##inst[] =       \
+                                ST_STM32_DT_INST_PINCTRL(inst , 0)),                    \
+                                ());                                                    \
+        static const struct motor_config motor_config_##inst =                          \
+                        COND_CODE_1(MOTOR_ARCH_SPECIFIC,                                \
+                                        (MOTOR_CONFIG_SPI_TIMER_BOARD(BOARD)(inst)),    \
+                                        (MOTOR_CONFIG_SPI(inst)));                      \
+        DEVICE_DT_INST_DEFINE(inst,                                                     \
+                        motor_init,                                                     \
+                        device_pm_control_nop,                                          \
+                        &motor_data_##inst,                                             \
+                        &motor_config_##inst,                                           \
+                        POST_KERNEL,                                                    \
+                        CONFIG_MOTOR_INIT_PRIORITY,                                     \
                         &motor_api_funcs);
 
 DT_INST_FOREACH_STATUS_OKAY(MOTOR_DEFINE)

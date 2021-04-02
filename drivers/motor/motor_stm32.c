@@ -1,9 +1,10 @@
-#include "stm32l4xx_ll_tim.h"
 #include <logging/log.h>
 #include "motor_h.h"
 
 
 #ifdef MOTOR_STM32
+
+LOG_MODULE_DECLARE(MOTOR, CONFIG_MOTOR_LOG_LEVEL);
 
 #if defined(CONFIG_SOC_SERIES_STM32F3X) ||                                     \
         defined(CONFIG_SOC_SERIES_STM32F7X) ||                                 \
@@ -33,24 +34,13 @@ static const uint32_t ch2ll[TIMER_MAX_CH] = {
 #endif
 };
 
-/** Channel to compare set function mapping. */
-static void (*const set_timer_compare[TIMER_MAX_CH])(TIM_TypeDef *,
-                uint32_t) = {
-        LL_TIM_OC_SetCompareCH1, LL_TIM_OC_SetCompareCH2,
-        LL_TIM_OC_SetCompareCH3, LL_TIM_OC_SetCompareCH4,
-#if TIMER_HAS_6CH
-        LL_TIM_OC_SetCompareCH5, LL_TIM_OC_SetCompareCH6
-#endif
-};
-
-
-LOG_MODULE_DECLARE(MOTOR, CONFIG_MOTOR_LOG_LEVEL);
 
 static inline const struct timer_config *to_tim_cfg(const struct device *dev)
 {
         return &((const struct motor_config*)dev->config)->timer;
 }
 
+/* Copied from drivers/pwm/pwm_stm32.c */
 static int get_tim_clk(const struct stm32_pclken *pclken, uint32_t *tim_clk)
 {
         int r;
@@ -134,15 +124,45 @@ static int get_tim_clk(const struct stm32_pclken *pclken, uint32_t *tim_clk)
         return 0;
 }
 
+static inline void motor_get_channels_from_pinctrl(const struct soc_gpio_pinctrl *pinctrl, uint32_t *save_ch, uint32_t *clk_ch)
+{
+        uint16_t pinmux1 = (0x0F00 & (uint16_t)pinctrl[0].pinmux) >> 8;
+        uint16_t pinmux2 = (0x0F00 & (uint16_t)pinctrl[0].pinmux) >> 8;
+        if(pinmux1 > 2)
+        {
+                *save_ch = pinmux1;
+                *clk_ch = pinmux2;
+        }
+        else
+        {
+                *save_ch = pinmux2;
+                *clk_ch = pinmux1;
+        }
+
+}
 
 static int motor_stm32_init(const struct device *dev)
 {
         const struct timer_config *tim_cfg = to_tim_cfg(dev);
-        struct motor_data *data = (struct motor_data *)dev->data;
         const struct motor_config *cfg = (const struct motor_config *)dev->config;
-        int err = 0;
+        const int8_t chain_length = cfg->chain_length;
         const struct device *clk;
+        struct motor_data *data = (struct motor_data *)dev->data;
+        
+        if(tim_cfg->pinctrl_len != 2)
+        {
+                LOG_DBG("To many timer channels, 2 needed%d", tim_cfg->pinctrl_len);
+                return -ERRMAX;
+        }
+        int err = 0;
+        /** Save channel. */
+        uint32_t save_ch = 0;
+        /** Clk channel. */
+        uint32_t clk_ch = 0;
+        motor_get_channels_from_pinctrl(tim_cfg->pinctrl, &save_ch, &clk_ch);
+
         LL_TIM_InitTypeDef init;
+
 
         clk = DEVICE_DT_GET(STM32_CLOCK_CONTROL_NODE);
 
@@ -168,8 +188,9 @@ static int motor_stm32_init(const struct device *dev)
         
         LL_TIM_StructInit(&init);
 
+
         init.CounterMode = LL_TIM_COUNTERMODE_UP;
-        init.Autoreload = 7;
+        init.Autoreload = chain_length;
         init.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
         init.Prescaler = 1;
 
@@ -196,18 +217,19 @@ static int motor_stm32_init(const struct device *dev)
         LL_TIM_OC_StructInit(&oc_init); 
         oc_init.OCMode = LL_TIM_OCMODE_PWM1;
         oc_init.OCState = LL_TIM_OCSTATE_ENABLE; /* Nachlesen */
-        oc_init.CompareValue = 7;
+        oc_init.CompareValue = chain_length;
 
-        LL_TIM_OC_Init(tim_cfg->timer, ch2ll[3], &oc_init);
+        LL_TIM_OC_Init(tim_cfg->timer, ch2ll[save_ch-1], &oc_init);
         if (err < 0) {
                 LOG_ERR("PWM pinctrl setup failed (%d)", err);
                 return err;
         }
         
-        LL_TIM_EnableARRPreload(tim_cfg->timer);
-        LL_TIM_OC_EnablePreload(tim_cfg->timer, ch2ll[3]);
-        LL_TIM_SetAutoReload(tim_cfg->timer, 7);
-        LL_TIM_GenerateEvent_UPDATE(tim_cfg->timer);
+        /* Überprüfen TODO */
+        //LL_TIM_EnableARRPreload(tim_cfg->timer);
+        //LL_TIM_OC_EnablePreload(tim_cfg->timer, ch2ll[save_ch]);
+        //LL_TIM_SetAutoReload(tim_cfg->timer, chain_length);
+        //LL_TIM_GenerateEvent_UPDATE(tim_cfg->timer);
 
 
         LL_TIM_EnableCounter(tim_cfg->timer);

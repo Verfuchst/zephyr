@@ -4,17 +4,29 @@
 #include <device.h>
 #include <drivers/spi.h>
 
+#if !defined CONFIG_MOTOR_NO_INPUT_CAPTURE_MODE
+#define MOTOR_ARCH_SPECIFIC 1
+#define BOARD
+#endif
 
 #if defined CONFIG_MOTOR_STM32_INPUT_CAPTURE_MODE
-#define MOTOR_ARCH_SPECIFIC
-#define MOTOR_STM32
+#define MOTOR_STM32 
+#undef BOARD
+#define BOARD STM32
+/* #elif defined CONFIG_MOTOR_<Board>_INPUT_CAPTURE_MODE */
 #endif /* CONFIG_MOTOR_STM32_INPUT_CAPTURE_MODE */
+
+#ifdef MOTOR_ARCH_SPECIFIC
 
 typedef int (*motor_input_capture_mode_init)(const struct device *tim);
 
 struct motor_input_capture_mode {
         motor_input_capture_mode_init init;
 };
+
+struct timer_config;
+extern struct timer_config timer;
+#endif /* MOTOR_ARCH_SPECIFIC */
 
 #if defined MOTOR_ARCH_SPECIFIC && defined MOTOR_STM32 
 
