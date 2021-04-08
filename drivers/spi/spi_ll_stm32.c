@@ -102,7 +102,7 @@ static int spi_stm32_dma_tx_load(const struct device *dev, const uint8_t *buf,
 	blk_cfg = &stream->dma_blk_cfg;
 
 	/* prepare the block for this TX DMA channel */
-	memset(blk_cfg, 0, sizeof(struct dma_block_config));
+	//memset(blk_cfg, 0, sizeof(struct dma_block_config));
 	blk_cfg->block_size = len;
 
 	/* tx direction has memory as source and periph as dest. */
@@ -130,6 +130,10 @@ static int spi_stm32_dma_tx_load(const struct device *dev, const uint8_t *buf,
 
 	/* give the fifo mode from the DT */
 	blk_cfg->fifo_mode_control = data->dma_tx.fifo_threshold;
+        
+        /* give the circular mode from the DT */
+        blk_cfg->source_reload_en = stream->dma_blk_cfg.source_reload_en;
+        blk_cfg->dest_reload_en = stream->dma_blk_cfg.dest_reload_en;
 
 	/* direction is given by the DT */
 	stream->dma_cfg.head_block = blk_cfg;
@@ -188,7 +192,6 @@ static int spi_stm32_dma_rx_load(const struct device *dev, uint8_t *buf,
 
 	/* give the fifo mode from the DT */
 	blk_cfg->fifo_mode_control = data->dma_rx.fifo_threshold;
-
 	/* direction is given by the DT */
 	stream->dma_cfg.head_block = blk_cfg;
 	stream->dma_cfg.user_data = data;
@@ -724,10 +727,16 @@ static int transceive_dma(const struct device *dev,
 		if (ret != 0) {
 			break;
 		}
+                
+                /* If circular mode is active*/
+                if(data->dma_tx.dma_blk_cfg.dest_reload_en == 1 && data->dma_tx.dma_blk_cfg.source_reload_en == 1)
+                {
+                        return ret;
+                }
 
 #ifdef SPI_SR_FTLVL
-		while (LL_SPI_GetTxFIFOLevel(spi) > 0) {
-		}
+                while (LL_SPI_GetTxFIFOLevel(spi) > 0) {
+                }
 #endif
 
 		/* wait until TX buffer is really empty */
@@ -889,6 +898,10 @@ static void spi_stm32_irq_config_func_##id(const struct device *dev)		\
 				DMA_CHANNEL_CONFIG(index, dir)),	\
 	.fifo_threshold = STM32_DMA_FEATURES_FIFO_THRESHOLD(		\
 				DMA_FEATURES(index, dir)),		\
+        .dma_blk_cfg = {                                                \
+                .source_reload_en = STM32_DMA_FEATURES_SOURCE_RELOAD(DMA_FEATURES(index, dir)), \
+                .dest_reload_en = STM32_DMA_FEATURES_DEST_RELOAD(DMA_FEATURES(index, dir)),     \
+        },                                                              \
 
 
 #if CONFIG_SPI_STM32_DMA

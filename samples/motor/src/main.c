@@ -32,9 +32,9 @@ void main(void)
         if (dev == NULL) {
                 return;
         }
-
-
         while (1) {
-
+                printk("sleep 1 sec \n");
+                motor_set_sensitivity(dev, MOTOR_1 | MOTOR_2, 10);
+                k_sleep(K_SECONDS(1));
         }
 }

@@ -10,7 +10,7 @@
         cs-gpios = <&gpiod 5 GPIO_ACTIVE_LOW>;
 
         /* rx only needed for the stm32 spi dma driver but not used */
-        dmas = <&dma1 5 1 0x20440 0x0>, <&dma1 4 1 0x20480 0x0>;
+        dmas = <&dma1 5 1 0x20440 0xC>, <&dma1 4 1 0x20480 0x0>;
         dma-names = "tx", "rx";
 
 

@@ -35,10 +35,6 @@ static const uint32_t ch2ll[TIMER_MAX_CH] = {
 };
 
 
-static inline const struct timer_config *to_tim_cfg(const struct device *dev)
-{
-        return &((const struct motor_config*)dev->config)->timer;
-}
 
 /* Copied from drivers/pwm/pwm_stm32.c */
 static int get_tim_clk(const struct stm32_pclken *pclken, uint32_t *tim_clk)
@@ -141,19 +137,20 @@ static inline void motor_get_channels_from_pinctrl(const struct soc_gpio_pinctrl
 
 }
 
-static int motor_stm32_init(const struct device *dev)
+static int motor_stm32_init(const struct device *dev, const struct timer_config *timer_config)
 {
-        const struct timer_config *tim_cfg = to_tim_cfg(dev);
+        const struct timer_config *tim_cfg = timer_config;
         const struct motor_config *cfg = (const struct motor_config *)dev->config;
-        const int8_t chain_length = cfg->chain_length;
+        const int8_t chain_length = cfg->chain_length-1;
         const struct device *clk;
         struct motor_data *data = (struct motor_data *)dev->data;
         
         if(tim_cfg->pinctrl_len != 2)
         {
-                LOG_DBG("To many timer channels, 2 needed%d", tim_cfg->pinctrl_len);
+                LOG_DBG("Timer channels %d, 2 needed", tim_cfg->pinctrl_len);
                 return -ERRMAX;
         }
+
         int err = 0;
         /** Save channel. */
         uint32_t save_ch = 0;
@@ -199,7 +196,7 @@ static int motor_stm32_init(const struct device *dev)
                 return -EIO;
         }
 
-        /* IC Counting clk ch1*/
+        /* IC Counting clk */
         LL_TIM_ENCODER_InitTypeDef encoder_init;
         encoder_init.IC1Polarity = LL_TIM_IC_POLARITY_RISING; 
         encoder_init.IC1Filter = LL_TIM_IC_FILTER_FDIV1; 
@@ -212,7 +209,7 @@ static int motor_stm32_init(const struct device *dev)
                 return err;
         }
 
-        /* OC Configuration save ch4*/
+        /* OC Configuration save */
         LL_TIM_OC_InitTypeDef oc_init;
         LL_TIM_OC_StructInit(&oc_init); 
         oc_init.OCMode = LL_TIM_OCMODE_PWM1;

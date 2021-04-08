@@ -25,29 +25,29 @@
 
 
 /**
- * @typedef motor_api_write_sensitivity
+ * @typedef motor_api_set_sensitivity
  * @brief Callback API for writing the sensitivity to a single motor device 
  *                     or multiple devices 
  *
- * See motor_write_sensitivity() for argument description 
+ * See motor_set_sensitivity() for argument description 
  */
-typedef int (*motor_api_write_sensitivity)(const struct device *dev,
+typedef int (*motor_api_set_sensitivity)(const struct device *dev,
                                            const uint16_t motor,
                                            const uint8_t sensitivity); 
 
 /**
- * @typedef motor_api_write_sensitivity_n
+ * @typedef motor_api_set_sensitivity_n
  * @brief Callback API for writing different sensitivity to multiple motor devices
  *
- * See motor_write_sensitivity_n() for argument description
+ * See motor_set_sensitivity_n() for argument description
  */
-typedef int (*motor_api_write_sensitivity_n)(const struct device *dev,
+typedef int (*motor_api_set_sensitivity_n)(const struct device *dev,
                                             const uint16_t motors,
                                             const uint8_t *sensitivity); 
 
 struct motor_driver_api {
-    motor_api_write_sensitivity     write_sensitivity;
-    motor_api_write_sensitivity_n   write_sensitivity_n;
+    motor_api_set_sensitivity     set_sensitivity;
+    motor_api_set_sensitivity_n   set_sensitivity_n;
 };
 
 
@@ -61,14 +61,14 @@ struct motor_driver_api {
  *
  * @return 0 if sucessful, negative errno code if failure.
  */
-static inline int motor_write_sensitivity(const struct device *dev,
+static inline int motor_set_sensitivity(const struct device *dev,
                                           const uint16_t motor,
                                           const uint8_t sensitivity)
 {
     const struct motor_driver_api *api = 
         (const struct motor_driver_api *)dev->api;
 
-    return api->write_sensitivity(dev, motor, sensitivity);
+    return api->set_sensitivity(dev, motor, sensitivity);
 }
 
 /**
@@ -85,14 +85,14 @@ static inline int motor_write_sensitivity(const struct device *dev,
  *
  * @return 0 if sucessful, negative errno code if failure.
  */
-static inline int motor_write_sensitivity_n(const struct device *dev,
+static inline int motor_set_sensitivity_n(const struct device *dev,
                                             const uint16_t motor,
                                             const uint8_t *sensitivity)
 {
     const struct motor_driver_api *api = 
         (const struct motor_driver_api *)dev->api;
 
-    return api->write_sensitivity_n(dev, motor, sensitivity);
+    return api->set_sensitivity_n(dev, motor, sensitivity);
 }
 
 #endif /*ZEPHYR_INCLUDE_DRIVERS_MOTOR_H_*/

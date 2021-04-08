@@ -26,9 +26,6 @@ LOG_MODULE_REGISTER(MOTOR, CONFIG_MOTOR_LOG_LEVEL);
 /* Number of sendet frames to get a 1-100 precentage for sensitivity*/
 #define FRAMES 100
 
-/* To many devices */
-#define EMANYDEVS 5
-
 static inline struct motor_data *to_data(const struct device *dev)
 {
         return dev->data; 
@@ -51,28 +48,26 @@ static inline const struct spi_config *to_bus_config(const struct device *dev)
 
 #ifdef MOTOR_ARCH_SPECIFIC
 
+static inline const struct timer_config *to_tim_cfg(const struct device *dev)
+{
+        return &to_config(dev)->timer;
+}
+
 static inline int motor_tim_init(const struct device *dev)
 {
-        return to_config(dev)->ic_mode->init(dev);
+        return to_config(dev)->ic_mode->init(dev, to_tim_cfg(dev));
 }
 
 #endif
 
-static int motor_write_spi(const struct device *bus,
-                const uint16_t motor,
-                const uint8_t val)
+static int motor_write_spi(const struct device *bus, uint8_t *cmd)
 {   
-        /* one cmd contains the FRAMES with the given sensitivity for each motor */
-        uint16_t cmd[FRAMES] = { 0 }; 
-
-        /* Init the array with 1 depends on the val for the sensitivity */
-        for(int i = 0; i < val; i++) {
-                cmd[i] = motor;
-        }
+        /* Init buffer with 0 */
+        memset(cmd, 0, FRAMES);
 
         struct spi_buf tx_buf = {
                 .buf = cmd,
-                .len = 1
+                .len = FRAMES
         };
 
         const struct spi_buf_set tx = {
@@ -81,41 +76,32 @@ static int motor_write_spi(const struct device *bus,
         };
 
         uint8_t ret = 0;
-        for(int i = 1; i <= FRAMES; i++) {
-                ret = spi_write(to_bus(bus), to_bus_config(bus), &tx);
-                if (ret) {
-                        LOG_DBG("spi_write FAIL %d\n", ret);
-                        return ret;
-                }
-                tx_buf.buf = cmd+i;
+        ret = spi_write(to_bus(bus), to_bus_config(bus), &tx);
+        if (ret) {
+                LOG_DBG("spi_write FAIL %d\n", ret);
+                return ret;
         }
 
         return 0;
 }
 
-static const struct motor_driver_api motor_api_funcs = {
-        .write_sensitivity = motor_write_spi,
-};
-
-
-const struct device *devices[5];
-static int8_t number_of_devices;
-
-
-void motor_worker_handler(struct k_work* work) 
+static int motor_set_sens(const struct device *dev,
+                         const uint16_t motor,
+                         const uint8_t sensitivity)
 {
-        uint16_t motor = 0xFF;
-        for(uint8_t i = 0; i < number_of_devices; i++) {
-                motor_write_spi(devices[i], motor, 50);
+        struct motor_data *data = to_data(dev);
+        uint8_t *cmd = data->cmd;
+
+        for(int i = 0; i < sensitivity; i++) {
+                cmd[i] = motor;
         }
-}	
-
-K_WORK_DEFINE(work, motor_worker_handler);
-
-void motor_timer_handler(struct k_timer *timer) 
-{
-        k_work_submit(&work);
+        return 0;
 }
+
+
+static const struct motor_driver_api motor_api_funcs = {
+        .set_sensitivity = motor_set_sens,
+};
 
 static int motor_bus_check_spi(const struct device *bus, const struct spi_config *spi_cfg)
 {
@@ -139,17 +125,11 @@ static int motor_bus_check_spi(const struct device *bus, const struct spi_config
 
 static int motor_init(const struct device *dev)
 {	    
-        struct motor_data *data = to_data(dev);                 
+        struct motor_data *data = to_data(dev);
         int err = 0;
 
         LOG_DBG("initializing \"%s\" on bus \"%s\"",
                 dev->name, to_bus(dev)->name);
-
-
-        if(number_of_devices > 5) {
-                err = -EMANYDEVS;
-                return err;
-        }
 
         err = motor_bus_check_spi(to_bus(dev), to_bus_config(dev));
         if(err != 0) {
@@ -164,12 +144,13 @@ static int motor_init(const struct device *dev)
                 return err;
         }
 #endif
-
-        devices[number_of_devices++] = dev;
-
-        k_timer_init(&data->timer, motor_timer_handler, NULL);
-        k_timer_start(&data->timer,  K_NO_WAIT, K_MSEC(1));
         
+        /* Setups circular mode */
+        motor_write_spi(dev, data->cmd);
+        if(err != 0) {
+                LOG_DBG("DMA failed: %d", err);
+                return err;
+        }
         LOG_DBG("\"%s\" OK", dev->name);
         return 0;
 }
@@ -209,23 +190,23 @@ static int motor_init(const struct device *dev)
         }                                                                               \
 
 /* Concat strings e.g. MOTOR_CONFIG_SPI_TIMER_##STM32 */
-#define PPCAT_NX(A, B)                                                                  \
-        A ## B  
+#define CC_BOARD(MACRO, BOARD)                                                          \
+        MACRO ## BOARD
 
-/* Expands board value e.g. board -> stm32 */
-#define PPCAT(func, board)                                                              \
-        PPCAT_NX(func, board) 
+/* Expands board macro e.g. board -> stm32 */
+#define EXPAND_BOARD(MACRO, BOARD)                                                              \
+        CC_BOARD(MACRO, BOARD) 
 
 
 #define MOTOR_CONFIG_SPI_TIMER_BOARD(board)                                             \
-        PPCAT(MOTOR_CONFIG_SPI_TIMER_, board)
+        EXPAND_BOARD(MOTOR_CONFIG_SPI_TIMER_, board)
 
 /*
  *  Main instantiation macro.
  *  TODO: Replace ST_STM32_DT_INST_PINCTR Macro with abstract one for each board
  */
 #define MOTOR_DEFINE(inst)                                                              \
-        static struct motor_data motor_data_##inst;                                     \
+        static struct motor_data motor_data_##inst = { .cmd = { 0 }};                   \
         COND_CODE_1(MOTOR_ARCH_SPECIFIC,                                                \
                         (static const struct soc_gpio_pinctrl pwm_pins_##inst[] =       \
                                 ST_STM32_DT_INST_PINCTRL(inst , 0)),                    \

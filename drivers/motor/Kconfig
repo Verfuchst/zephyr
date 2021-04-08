@@ -17,6 +17,22 @@ config MOTOR_INIT_PRIORITY
         Motor initialization priority for the driver
 
 choice 
+        prompt "Accuracy of intensity"
+        default MOTOR_FRAMES_100
+        help
+           Accuracy for setting the intensity 
+           e.g. MOTOR_FRAMES_10 for 10%, 20%, ..., 100%,
+           e.g. MOTOR_FRAMES_100 for 1%, 2%, 3%, ..., 99%, 100%.
+
+config MOTOR_FRAMES_10
+        bool "Ten-steps accuarcy"
+
+config MOTOR_FRAMES_100
+        bool "One-step accuarcy"
+
+endchoice 
+
+choice 
         prompt "MOTOR timer input capture mode"
         default MOTOR_NO_INPUT_CAPTURE_MODE
         help

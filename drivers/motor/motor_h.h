@@ -4,6 +4,10 @@
 #include <device.h>
 #include <drivers/spi.h>
 
+/* Number of sendet frames to get a 1-100 precentage for sensitivity*/
+#define FRAMES 100
+
+
 #if !defined CONFIG_MOTOR_NO_INPUT_CAPTURE_MODE
 #define MOTOR_ARCH_SPECIFIC 1
 #define BOARD
@@ -17,15 +21,15 @@
 #endif /* CONFIG_MOTOR_STM32_INPUT_CAPTURE_MODE */
 
 #ifdef MOTOR_ARCH_SPECIFIC
+struct timer_config;
+extern struct timer_config timer;
 
-typedef int (*motor_input_capture_mode_init)(const struct device *tim);
+typedef int (*motor_input_capture_mode_init)(const struct device *dev, const struct timer_config *timer_config);
 
 struct motor_input_capture_mode {
         motor_input_capture_mode_init init;
 };
 
-struct timer_config;
-extern struct timer_config timer;
 #endif /* MOTOR_ARCH_SPECIFIC */
 
 #if defined MOTOR_ARCH_SPECIFIC && defined MOTOR_STM32 
@@ -53,6 +57,7 @@ extern const struct motor_input_capture_mode motor_input_capture_mode_stm32;
 
 #endif /* MOTOR_ARCH_SPECIFIC && MOTOR_STM32 */
 
+/* TODO move chain_length to data, make it possible to expand the chain */
 struct motor_config {
         const struct device *bus;
         const struct spi_config spi_cfg;
@@ -66,6 +71,7 @@ struct motor_config {
 
 struct motor_data {
         struct k_timer timer;
+        uint8_t cmd[FRAMES];
 #ifdef MOTOR_ARCH_SPECIFIC
         /** Timer clock (Hz). */
         uint32_t tim_clk;
