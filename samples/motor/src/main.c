@@ -34,7 +34,7 @@ void main(void)
 	}
 	while (1) {
 		printk("sleep 1 sec \n");
-		motor_set_sensitivity(dev, MOTOR_1 | MOTOR_2, 10);
+		motor_set_sensitivity(dev, MOTOR_1 | MOTOR_2, 3);
 		k_sleep(K_SECONDS(1));
 	}
 }

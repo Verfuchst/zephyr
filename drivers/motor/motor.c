@@ -23,9 +23,6 @@ LOG_MODULE_REGISTER(MOTOR, CONFIG_MOTOR_LOG_LEVEL);
 /* SPI BUS CONFIGS */
 #define MOTOR_SPI_OPERATION (SPI_WORD_SET(8) | SPI_TRANSFER_MSB)
 
-/* Number of sendet frames to get a 1-100 precentage for sensitivity*/
-#define FRAMES 100
-
 static inline struct motor_data *to_data(const struct device *dev)
 {
 	return dev->data;

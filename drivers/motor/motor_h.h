@@ -4,8 +4,13 @@
 #include <device.h>
 #include <drivers/spi.h>
 
-/* Number of sendet frames to get a 1-100 precentage for sensitivity*/
-#define FRAMES 100
+/* Accuracy of intensity */
+#if defined CONFIG_MOTOR_FRAMES_10
+#define FRAMES (10)
+#elif defined CONFIG_MOTOR_FRAMES_100
+#define FRAMES (100)
+#endif
+
 
 
 #if !defined CONFIG_MOTOR_NO_INPUT_CAPTURE_MODE
@@ -57,7 +62,7 @@ extern const struct motor_input_capture_mode motor_input_capture_mode_stm32;
 
 #endif /* MOTOR_ARCH_SPECIFIC && MOTOR_STM32 */
 
-/* TODO move chain_length to data, make it possible to expand the chain */
+/* TODO move chain_length to data, make it possible to expand the chain dynamically */
 struct motor_config {
         const struct device *bus;
         const struct spi_config spi_cfg;
