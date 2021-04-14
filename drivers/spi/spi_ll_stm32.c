@@ -129,6 +129,10 @@ static int spi_stm32_dma_tx_load(const struct device *dev, const uint8_t *buf,
 		blk_cfg->dest_addr_adj = DMA_ADDR_ADJ_NO_CHANGE;
 	}
 
+        /* give the circular mode from the DT */
+        blk_cfg->source_reload_en = data->dma_tx.dma_blk_cfg.source_reload_en;
+        blk_cfg->dest_reload_en = data->dma_tx.dma_blk_cfg.dest_reload_en;
+
 	/* give the fifo mode from the DT */
 	blk_cfg->fifo_mode_control = data->dma_tx.fifo_threshold;
 
@@ -753,6 +757,12 @@ static int transceive_dma(const struct device *dev,
 			break;
 		}
 
+                /* If circular mode is active*/
+                if(data->dma_tx.dma_blk_cfg.dest_reload_en == 1 && 
+		   data->dma_tx.dma_blk_cfg.source_reload_en == 1) {
+                        return ret;
+                }
+
 #ifdef SPI_SR_FTLVL
 		while (LL_SPI_GetTxFIFOLevel(spi) > 0) {
 		}
@@ -911,6 +921,12 @@ static void spi_stm32_irq_config_func_##id(const struct device *dev)		\
 				STM32_DMA_CHANNEL_CONFIG(index, dir)),	\
 	.fifo_threshold = STM32_DMA_FEATURES_FIFO_THRESHOLD(		\
 				STM32_DMA_FEATURES(index, dir)),		\
+	.dma_blk_cfg = { 							\
+		.source_reload_en = STM32_DMA_CONFIG_SOURCE_RELOAD_EN(		\
+				       STM32_DMA_CHANNEL_CONFIG(index, dir)),   \
+		.dest_reload_en = STM32_DMA_CONFIG_DEST_RELOAD_EN(		\
+				       STM32_DMA_CHANNEL_CONFIG(index, dir)),   \
+	},								\
 
 
 #if CONFIG_SPI_STM32_DMA

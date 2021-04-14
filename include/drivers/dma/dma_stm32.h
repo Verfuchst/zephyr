@@ -34,6 +34,9 @@
 		DT_INST_DMAS_CELL_BY_NAME(id, dir, channel_config)
 
 /* macros for channel-config */
+/* source- and dest-reload-en defined on bit 5 as true/false */
+#define STM32_DMA_CONFIG_SOURCE_RELOAD_EN(config)	((config >> 5) & 0x1)
+#define STM32_DMA_CONFIG_DEST_RELOAD_EN(config) 	((config >> 5) & 0x1)
 /* direction defined on bits 6-7 */
 /* 0 -> MEM_TO_MEM, 1 -> MEM_TO_PERIPH, 2 -> PERIPH_TO_MEM */
 #define STM32_DMA_CONFIG_DIRECTION(config)		((config >> 6) & 0x3)
