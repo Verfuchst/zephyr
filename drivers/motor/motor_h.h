@@ -69,13 +69,14 @@ struct motor_config {
         /* number of connected motors */
         const int8_t chain_length;
 #ifdef MOTOR_ARCH_SPECIFIC 
+        /* Input capture mode timer */
         struct timer_config timer;
         const struct motor_input_capture_mode *ic_mode;
 #endif
 };
 
 struct motor_data {
-        struct k_timer timer;
+        /* Transfer array for the motors */
         uint8_t cmd[FRAMES];
 #ifdef MOTOR_ARCH_SPECIFIC
         /** Timer clock (Hz). */

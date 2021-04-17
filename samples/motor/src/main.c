@@ -32,9 +32,23 @@ void main(void)
 	if (dev == NULL) {
 		return;
 	}
+
+	int sensitivity = 0;
 	while (1) {
-		printk("sleep 1 sec \n");
-		motor_set_sensitivity(dev, MOTOR_1 | MOTOR_2, 3);
-		k_sleep(K_SECONDS(1));
+
+		motor_set_sensitivity(dev, 0xFF, sensitivity);
+
+#if defined CONFIG_MOTOR_FRAMES_10
+		sensitivity += 1;
+		if (sensitivity > 10) {
+			sensitivity = 0;
+		}
+#elif defined CONFIG_MOTOR_FRAMES_100
+		sensitivity += 10;
+		if (sensitivity > 100) {
+			sensitivity = 0;
+		}
+#endif
+		k_sleep(K_SECONDS(5));
 	}
 }

@@ -89,8 +89,21 @@ static int motor_set_sens(const struct device *dev,
 	struct motor_data *data = to_data(dev);
 	uint8_t *cmd = data->cmd;
 
-	for (int i = 0; i < sensitivity; i++) {
-		cmd[i] = motor;
+	if (sensitivity > FRAMES) {
+		LOG_DBG("Sensitiviy must be between 0 and %d, sensitivity is %d",
+                        FRAMES,
+			sensitivity);
+		return -EINVAL;
+	}
+
+	for (int i = 0; i < FRAMES; i++) {
+		if (i <= sensitivity) {
+			/* set the new sensitivity for the given motors. */
+			cmd[i] |= motor;
+		} else {
+			/* needed to the clean the rest bits if the new sensitivity is lower then the previous one of the given motors. */
+			cmd[i] &= ~motor;
+		}
 	}
 	return 0;
 }
@@ -142,7 +155,7 @@ static int motor_init(const struct device *dev)
 	}
 #endif
 
-	/* Setups circular mode */
+	/* If dma is on, setups circular mode */
 	motor_write_spi(dev, data->cmd);
 	if (err != 0) {
 		LOG_DBG("DMA failed: %d", err);
