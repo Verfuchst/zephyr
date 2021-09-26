@@ -1,3 +1,4 @@
+#include "sys/printk.h"
 #include <zephyr.h>
 #include <device.h>
 #include <devicetree.h>
@@ -37,11 +38,17 @@ void main(void)
         
 	while (1) {
                 struct sensor_value euler_h, euler_r, euler_p;
+                double euler_h_d, euler_r_d, euler_p_d;
 
                 sensor_sample_fetch_chan(dev, SENSOR_CHAN_HRP);
                 sensor_channel_get(dev, SENSOR_CHAN_H, &euler_h);
                 sensor_channel_get(dev, SENSOR_CHAN_R, &euler_r);
                 sensor_channel_get(dev, SENSOR_CHAN_P, &euler_p);
+
+                euler_h_d = sensor_value_to_double(&euler_h);
+                euler_r_d = sensor_value_to_double(&euler_r);
+                euler_p_d = sensor_value_to_double(&euler_p);
+
 		k_sleep(K_MSEC(10));
 	}
 }

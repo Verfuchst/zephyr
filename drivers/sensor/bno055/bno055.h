@@ -44,11 +44,11 @@ struct bno055_euler_t
             int16_t p; /**< Euler p data */
 };
 
-struct bno055_euler_float_t
+struct bno055_euler_double_t
 {
-        float h; /**< Euler h float data */
-        float r; /**< Euler r float data */
-        float p; /**< Euler p float data */
+        double h; /**< Euler h dobule data */
+        double r; /**< Euler r double data */
+        double p; /**< Euler p double data */
 };
 
 

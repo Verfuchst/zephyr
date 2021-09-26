@@ -27,15 +27,8 @@ struct bno055_data {
         uint8_t page_id;
         uint8_t cur_mode;
        
-        uint8_t accel_rev;
-        uint8_t mag_rev;
-        uint8_t gyro_rev;
-        int16_t sw_rev;
-        uint8_t bl_rev;
-        
-
         struct bno055_euler_t euler_reg_hpr;
-        struct bno055_euler_float_t euler_float_hpr;
+        struct bno055_euler_double_t euler_double_hpr;
 
 };
 
@@ -171,6 +164,7 @@ static int bno055_sample_fetch(const struct device *dev,
         switch(chan) {
                 case SENSOR_CHAN_HRP:
                         ret = bno055_read_euler_hrp(dev);
+                        break;
                 default: 
                         return -EINVAL;
         }
@@ -185,19 +179,16 @@ static int bno055_channel_get(const struct device *dev,
         
 	switch (chan) {
 	case SENSOR_CHAN_H:
-                data->euler_float_hpr.h = (float)(data->euler_reg_hpr.h / BNO055_EULER_DIV_DEG);
-                val->val1 = data->euler_reg_hpr.h;
-                val->val2 = 0; /* TODO */
+                data->euler_double_hpr.h = (double)(data->euler_reg_hpr.h / BNO055_EULER_DIV_DEG);
+                sensor_value_from_double(val, data->euler_double_hpr.h)
 		break;
 	case SENSOR_CHAN_R:
-                data->euler_float_hpr.r = (float)(data->euler_reg_hpr.r / BNO055_EULER_DIV_DEG);
-                val->val1 = data->euler_reg_hpr.r;
-                val->val2 = 0; /* TODO */
+                data->euler_double_hpr.r = (double)(data->euler_reg_hpr.r / BNO055_EULER_DIV_DEG);
+                sensor_value_from_double(val, data->euler_double_hpr.r)
 		break;
 	case SENSOR_CHAN_P:
-                data->euler_float_hpr.p = (float)(data->euler_reg_hpr.p / BNO055_EULER_DIV_DEG);
-                val->val1 = data->euler_reg_hpr.p;
-                val->val2 = 0; /* TODO */
+                data->euler_double_hpr.p = (double)(data->euler_reg_hpr.p / BNO055_EULER_DIV_DEG);
+                sensor_value_from_double(val, data->euler_double_hpr.p)
 		break;
 	default:
 		return -EINVAL;
