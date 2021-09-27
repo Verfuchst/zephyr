@@ -1,4 +1,3 @@
-#include "sys/printk.h"
 #include <zephyr.h>
 #include <device.h>
 #include <devicetree.h>
@@ -48,6 +47,8 @@ void main(void)
                 euler_h_d = sensor_value_to_double(&euler_h);
                 euler_r_d = sensor_value_to_double(&euler_r);
                 euler_p_d = sensor_value_to_double(&euler_p);
+
+                printk("Euler angles, H: %lf R: %lf P: %lf", euler_h_d, euler_r_d, euler_p_d);
 
 		k_sleep(K_MSEC(10));
 	}

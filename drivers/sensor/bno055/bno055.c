@@ -180,15 +180,15 @@ static int bno055_channel_get(const struct device *dev,
 	switch (chan) {
 	case SENSOR_CHAN_H:
                 data->euler_double_hpr.h = (double)(data->euler_reg_hpr.h / BNO055_EULER_DIV_DEG);
-                sensor_value_from_double(val, data->euler_double_hpr.h)
+                sensor_value_from_double(val, data->euler_double_hpr.h);
 		break;
 	case SENSOR_CHAN_R:
                 data->euler_double_hpr.r = (double)(data->euler_reg_hpr.r / BNO055_EULER_DIV_DEG);
-                sensor_value_from_double(val, data->euler_double_hpr.r)
+                sensor_value_from_double(val, data->euler_double_hpr.r);
 		break;
 	case SENSOR_CHAN_P:
                 data->euler_double_hpr.p = (double)(data->euler_reg_hpr.p / BNO055_EULER_DIV_DEG);
-                sensor_value_from_double(val, data->euler_double_hpr.p)
+                sensor_value_from_double(val, data->euler_double_hpr.p);
 		break;
 	default:
 		return -EINVAL;
